@@ -1,0 +1,9 @@
+[
+  {
+    "id": "synthetic-observation", "traceId": "synthetic-trace",
+    "projectId": "synthetic-project", "userId": "synthetic-person",
+    "sessionId": "synthetic-session", "name": "Codex Turn", "type": "AGENT",
+    "startTime": "2026-10-09T03:00:00Z", "endTime": "2026-10-09T03:01:00Z",
+    "input": "小さな練習用の資料を整理したい", "output": "整理案を提示した"
+  }
+]

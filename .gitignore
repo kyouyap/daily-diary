@@ -1,0 +1,4 @@
+.daily-diary-runtime/
+.superpowers/
+__pycache__/
+*.pyc
