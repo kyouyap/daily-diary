@@ -8,6 +8,8 @@
 
 このPCの `~/.codex/skills/daily-diary/` に日誌作成スキルを配置しました。`$daily-diary 今日の業務日誌をまとめて` で、資料収集 → 一問ずつ最大二問 → 本文確認 → 接続済みNotion MCPで保存、を進めます。本文確認前は日誌を書き込まず、保存後は読み戻して照合します。新しい日誌での実運用は未検証、定期実行は未設定です。以下は別のローカルhelperの実装範囲を説明します。
 
+スキルの管理用ファイルは [skills/daily-diary/SKILL.md](skills/daily-diary/SKILL.md) にあります。[Notion保存手順](skills/daily-diary/references/notion-save.md) とUI設定も同じフォルダで管理します。別のPCで使う場合は、このフォルダをそのPCの `~/.codex/skills/daily-diary/` に配置し、Notion接続と保存先へのアクセスを確認してください。リポジトリ側の更新は、配置済みのスキルへ自動反映されません。
+
 Codex のログに基づく出来事を、dot との短い会話で補って日記にするためのローカル helper。**現在は合成資料とローカル Git によるレビュー用実装です。本番の日記運用はまだ開始していません。**
 
 ## 実装済み
