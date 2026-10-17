@@ -7,7 +7,6 @@ import copy
 import fcntl
 import json
 import os
-import shutil
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -92,7 +91,10 @@ def locked(root):
 
 
 def configuration(root):
-    config = load(root, 'config.json')
+    return validate_configuration(load(root, 'config.json'))
+
+
+def validate_configuration(config):
     if not isinstance(config, dict) or config.get('schema_version') != 1 or not isinstance(config.get('targets'), list):
         raise ValueError('local config.json required; use the fictional example as a guide')
     seen = set()
@@ -156,6 +158,10 @@ def _states(root, config):
     result = []
     for t in config['targets']:
         value = load(root, state_path(t['source'], t['account']))
+        if value is None:
+            records_root = safe(root, 'records')
+            if records_root.exists() and any(records_root.glob(f'*/{t["source"]}/{t["account"]}.json')):
+                raise RecoveryError('target state missing while daily records exist')
         if value is not None:
             if not isinstance(value, dict) or value.get('schema_version') != 1 or value.get('source') != t['source'] or value.get('account') != t['account']:
                 raise RecoveryError('invalid target state')
@@ -163,6 +169,14 @@ def _states(root, config):
                 if field not in value:
                     raise RecoveryError('incomplete target state')
             result.append(value)
+    # An index is a claim that a durable record exists. Never downgrade an
+    # externally removed file to an empty successful day or snapshot.
+    for state in result:
+        for entry in state['record_index'].values():
+            path = daily_path(entry['date'], state['source'], state['account'])
+            doc = load(root, path)
+            if not isinstance(doc, dict) or not any(r.get('record_key') == entry['key'] for r in doc.get('records', [])):
+                raise RecoveryError('indexed record missing from daily storage')
     return result
 
 
@@ -226,7 +240,10 @@ def import_batch(root, batch):
                         if item['precision'] != 'unknown' and item not in times:
                             times.append(item)
                 elif source == 'screentime':
-                    existing['data'] = r['data']
+                    measurement_end = min(timestamp(b['requested_range']['end']), datetime.fromisoformat(day).replace(tzinfo=JST) + timedelta(days=1)).isoformat()
+                    if timestamp(measurement_end) >= timestamp(existing['measurement_end']):
+                        existing['data'] = r['data']
+                        existing['measurement_end'] = measurement_end
                 elif source == 'langfuse':
                     existing['data'].update({k: v for k, v in r['data'].items() if v is not None})
                 if existing['event_time']['precision'] == 'unknown' and r['event_time']['precision'] != 'unknown':
@@ -238,6 +255,8 @@ def import_batch(root, batch):
                     for item in [r['event_time'], *input_record['data'].get('observed_playback_times', [])]:
                         if item['precision'] != 'unknown' and item not in r['data']['observed_playback_times']:
                             r['data']['observed_playback_times'].append(item)
+                elif source == 'screentime':
+                    r['measurement_end'] = min(timestamp(b['requested_range']['end']), datetime.fromisoformat(day).replace(tzinfo=JST) + timedelta(days=1)).isoformat()
                 doc['records'].append(r)
                 state['record_index'][unknown_key or key] = {'key': key, 'date': day}
                 changed += 1
@@ -263,15 +282,33 @@ def import_batch(root, batch):
         backup_status = {'status': 'not_requested'}
         if b['status'] in {'success', 'partial'}:
             from .backup import _create_backup_locked
+            backup_failed = False
             try:
                 backup_status = _create_backup_locked(root, timestamp(b['observed_at']).astimezone(JST).date().isoformat())
             except (OSError, ValueError, RecoveryError):
                 # The batch is already durable. Never report it as unsaved or
                 # lose its receipt just because a later backup failed.
                 backup_status = {'status': 'failed'}
-                notifications.append({'source': source, 'account': account, 'status': 'backup_failed'})
+                backup_failed = True
+                if not state.get('backup_failed'):
+                    notifications.append({'source': source, 'account': account, 'status': 'backup_failed'})
+            if state.get('backup_failed', False) != backup_failed:
+                state['backup_failed'] = backup_failed
+                atomic_json(root, state_path(source, account), state)
         return {'status': 'stored', 'collection_status': b['status'], 'changed_records': changed,
                 'notifications': notifications, 'covered_ranges': state['covered_ranges'], 'backup': backup_status}
+
+
+def _public_targets(config, states):
+    result = []
+    for target in config['targets']:
+        state = next((s for s in states if (s['source'], s['account']) == (target['source'], target['account'])), None)
+        if state is None:
+            result.append({'source': target['source'], 'account': target['account'], 'covered_ranges': [],
+                           'last_attempt': None, 'last_success': None, 'blocked_reason': None})
+        else:
+            result.append({k: state[k] for k in ('source', 'account', 'initial_start', 'covered_ranges', 'last_attempt', 'last_success', 'blocked_reason')})
+    return result
 
 
 def status(root):
@@ -280,7 +317,7 @@ def status(root):
         _recover(root)
         config = configuration(root)
         states = _states(root, config)
-        return {'targets': [{k: s[k] for k in ('source', 'account', 'initial_start', 'covered_ranges', 'last_attempt', 'last_success', 'blocked_reason')} for s in states]}
+        return {'targets': _public_targets(config, states)}
 
 
 def read_day(root, date):
@@ -304,4 +341,4 @@ def read_day(root, date):
             for r in doc['records']:
                 if event_date(r) == date or event_date(r) is None and r['storage_date'] == date:
                     records.append({**r, 'source': doc['source'], 'account': doc['account']})
-        return {'date': date, 'records': records, 'targets': [{k: s[k] for k in ('source', 'account', 'covered_ranges', 'last_attempt', 'blocked_reason')} for s in states]}
+        return {'date': date, 'records': records, 'targets': _public_targets(config, states)}

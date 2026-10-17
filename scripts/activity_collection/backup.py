@@ -100,13 +100,40 @@ def restore_backup(backup_dir, destination):
             raise ValueError('backup checksum mismatch')
         contents[rel] = json.loads(data)
     # Check referential integrity before creating the destination.
-    config = store.configuration(source)
-    for state in store._states(source, config):
-        for entry in state['record_index'].values():
-            path = store.daily_path(entry['date'], state['source'], state['account'])
-            doc = contents.get(path)
-            if not doc or not any(r['record_key'] == entry['key'] for r in doc.get('records', [])):
-                raise ValueError('backup record index mismatch')
+    expected_files = {p.relative_to(source).as_posix() for p in _files(source)}
+    if set(contents) != expected_files:
+        raise ValueError('backup manifest omits snapshot files')
+    # Validate only the verified in-memory payloads that will actually be
+    # restored. Unlisted source files must never supply missing state.
+    try:
+        config = store.validate_configuration(contents['config.json'])
+        targets = {(t['source'], t['account']) for t in config['targets']}
+        states = {}
+        for path, state in contents.items():
+            if not path.startswith('state/'):
+                continue
+            if path != store.state_path(state['source'], state['account']) or state['schema_version'] != 1:
+                raise ValueError('invalid state path or version')
+            if (state['source'], state['account']) not in targets:
+                raise ValueError('state target absent from config')
+            states[(state['source'], state['account'])] = state
+            for entry in state['record_index'].values():
+                document = contents.get(store.daily_path(entry['date'], state['source'], state['account']))
+                if not document or not any(r['record_key'] == entry['key'] for r in document['records']):
+                    raise ValueError('backup index points to missing record')
+        for path, doc in contents.items():
+            if not path.startswith('records/'):
+                continue
+            if path != store.daily_path(doc['date'], doc['source'], doc['account']) or doc['schema_version'] != 1:
+                raise ValueError('invalid daily record path or version')
+            state = states.get((doc['source'], doc['account']))
+            if state is None:
+                raise ValueError('backup records have no target state')
+            index = {(e['date'], e['key']) for e in state['record_index'].values()}
+            if any((doc['date'], r['record_key']) not in index for r in doc['records']):
+                raise ValueError('backup record is absent from index')
+    except (KeyError, TypeError, AttributeError) as exc:
+        raise ValueError('invalid snapshot structure') from exc
     dest.mkdir(mode=0o700, parents=True, exist_ok=True)
     os.chmod(dest, 0o700)
     for rel, value in contents.items():

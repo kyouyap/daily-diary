@@ -28,5 +28,9 @@ def plan_collection(config, states, now):
             # Stop at the next confirmed interval instead of requesting through it.
             next_covered = [interval(r)[0] for r in state.get('covered_ranges', []) if interval(r)[0] > cursor]
             end = min([recent, cursor + timedelta(days=7), *next_covered])
-            plans.append({**common, 'mode': 'backfill', 'range': {'start': cursor.isoformat(), 'end': end.isoformat()}})
+            start = cursor
+            if target['source'] == 'screentime':
+                start = cursor.astimezone(JST).replace(hour=0, minute=0, second=0, microsecond=0)
+                end = min(end, start + timedelta(days=7))
+            plans.append({**common, 'mode': 'backfill', 'range': {'start': start.isoformat(), 'end': end.isoformat()}})
     return plans

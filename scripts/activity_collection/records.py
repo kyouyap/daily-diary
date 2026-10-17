@@ -97,7 +97,7 @@ def digest(value):
 def record_key(source, account, record):
     parts = [source, account, record['kind'], record['external_id']]
     if source == 'youtube':
-        parts += [event_date(record) or record['storage_date']]
+        parts += ['dated' if event_date(record) else 'unknown', event_date(record) or record['storage_date']]
     elif source == 'screentime':
         parts = [source, account, record['storage_date'], record['data']['device'], record['data']['application']]
     return digest(parts)
@@ -115,6 +115,8 @@ def validate_batch(batch, config):
         target = next((t for t in config['targets'] if (t['source'], t['account']) == (source, account)), None)
         if target is None or value['observed_identity'] != target['identity']:
             raise ValueError('unverified source identity')
+        if set(value['requested_range']) != {'start', 'end'}:
+            raise ValueError('unexpected requested range fields')
         start, end = interval(value['requested_range'])
         observed = timestamp(value['observed_at'])
         if end > observed or value['status'] not in STATUSES:
@@ -132,9 +134,11 @@ def validate_batch(batch, config):
         if value['status'] not in {'success', 'partial'} and (value['records'] or coverage):
             raise ValueError('failure cannot assert coverage or records')
         for issue in value['issues']:
-            if not re.fullmatch('[a-z][a-z0-9_]*', issue['code']) or type(issue['retryable']) is not bool:
+            if set(issue) != {'code', 'retryable', 'range'} or not re.fullmatch('[a-z][a-z0-9_]*', issue['code']) or type(issue['retryable']) is not bool:
                 raise ValueError('invalid issue')
             if issue['range'] is not None:
+                if set(issue['range']) != {'start', 'end'}:
+                    raise ValueError('unexpected issue range fields')
                 a, b = interval(issue['range'])
                 if not start <= a < b <= end:
                     raise ValueError('issue outside request')
@@ -186,6 +190,11 @@ def validate_batch(batch, config):
                 if not d.get('event_id') and not (isinstance(d.get('segment_id'), str) and type(d.get('line')) is int and d['line'] > 0):
                     raise ValueError('stable event reference required')
             elif source == 'screentime':
+                if r['event_time']['precision'] != 'day' or r['event_time']['timezone'] != 'Asia/Tokyo':
+                    raise ValueError('daily JST usage required')
+                day_start = datetime.fromisoformat(day).replace(tzinfo=JST)
+                if start > day_start:
+                    raise ValueError('daily usage must cover a midnight prefix; request the full day again')
                 if not all(isinstance(d.get(k), str) and d[k] for k in ('device', 'application', 'generation', 'sha256')):
                     raise ValueError('missing Screen Time reference')
             if 'duration_seconds' in d and (type(d['duration_seconds']) not in (int, float) or d['duration_seconds'] < 0):
