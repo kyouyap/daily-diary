@@ -10,8 +10,8 @@ $daily-diary 今日の業務日誌をまとめて
 
 日付指定がなければ、日本時間の今日0時から実行時点までを対象にします。
 
-1. Langfuseの全会話、メール、PC活動記録を読み、課題・目的ごとにタスクを整理する。
-2. 主な出来事を短く紹介し、「どんな一日だった？」から、本人の話に沿って一問ずつ自然に振り返る。活動ごとの感想や学びは必須にしない。
+1. 蓄積したX投稿・YouTube再生履歴・AI会話・PC活動・Screen Timeと取得状況を読み、メール・カレンダーは都度取得する。未導入なら既存の読取経路で補う。
+2. 確認できた事実と解釈を分け、テーマを3〜5項目・各1〜2文程度で提示する。「どんな一日だった？」から本人の話で補う。活動ごとの感想や学びは必須にしない。
 3. 折りたたむ詳細・出典も含めて保存する全文を表示し、本人のOKを受ける。
 4. Notionへ保存して読み戻し、日誌のリンクを返す。
 
@@ -33,7 +33,22 @@ $daily-diary 今日の業務日誌をまとめて
 - [本文テンプレート](skills/daily-diary/references/diary-format.md)
 - [Notion保存](skills/daily-diary/references/notion-save.md)
 
-このフォルダを `~/.codex/skills/daily-diary/` に配置して使います。このPCの配置済みスキルはリポジトリと同期済みです。以後のリポジトリ更新は自動反映されません。Langfuseの既存認証と、メール・Computer History・Notionの接続が必要です。取得できない接続は不足として扱います。
+このフォルダを `~/.codex/skills/daily-diary/` に配置して使います。今回の更新はリポジトリ内だけで、配置済みスキルへは未反映です。以後のリポジトリ更新も自動反映されません。Langfuseの既存認証と、メール・カレンダー・Computer History・Notionの接続が必要です。取得できない接続は不足として扱います。
+
+## 活動記録の収集
+
+[収集スキル](skills/collect-activity/SKILL.md)は日記とは独立して使います。Chromeや既存接続の読取はCodexが行い、Pythonの保存処理は渡された収集結果だけを日別JSONへ保存します。CLIを起動するだけではXやYouTubeを収集しません。
+
+- [導入とScreen Timeの再現](docs/collection/setup.md)
+- [手動収集・バックアップ・復旧](docs/collection/operations.md)
+- [保存仕様](docs/collection/storage-contract.md)
+- [検証結果と未確認事項](docs/collection/verification.md)
+
+Python 3.12以上の標準ライブラリを使います。実データ・個人設定・バックアップはGit管理外のローカル保存先へ置き、外部へ自動転送しません。YouTube Musicは収集しません。
+
+毎朝7時、Mac復帰後の回収、ログイン切れの通知は設計上の方針です。無人実行の接続・定期実行登録は保留しており、収集が自動で動いている状態ではありません。既存Screen Timeの15分収集は変更していません。
+
+検証は `python3 -B -m unittest discover -s tests/collection -p 'test_*.py' -v`。架空データを一時フォルダだけに保存します。
 
 2026-10-13、以前のPythonツール・テスト・旧設計文書を削除し、合意した手順でスキルを作り直しました。旧Notion DBと13日分の日誌はゴミ箱へ移し、新DBは空の状態から開始しています。旧記録は復元していません。
 
