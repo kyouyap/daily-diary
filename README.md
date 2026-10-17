@@ -10,7 +10,7 @@ $daily-diary 今日の業務日誌をまとめて
 
 日付指定がなければ、日本時間の今日0時から実行時点までを対象にします。
 
-1. 蓄積したX投稿・YouTube再生履歴・AI会話・PC活動・Screen Timeと取得状況を読み、メール・カレンダーは都度取得する。未導入なら既存の読取経路で補う。
+1. 保存済み記録と取得状況を確認し、収集スキルで対象日だけのX投稿・YouTube再生履歴・AI会話・PC活動・Screen Timeを取得・ローカル保存して読み直す。メール・カレンダーは都度取得する。保存済み資料だけの指定や保存先の未導入時は、その範囲で進める。
 2. 確認できた事実と解釈を分け、テーマを3〜5項目・各1〜2文程度で提示する。「どんな一日だった？」から本人の話で補う。活動ごとの感想や学びは必須にしない。
 3. 折りたたむ詳細・出典も含めて保存する全文を表示し、本人のOKを受ける。
 4. Notionへ保存して読み戻し、日誌のリンクを返す。
@@ -33,11 +33,11 @@ $daily-diary 今日の業務日誌をまとめて
 - [本文テンプレート](skills/daily-diary/references/diary-format.md)
 - [Notion保存](skills/daily-diary/references/notion-save.md)
 
-このフォルダを `~/.codex/skills/daily-diary/` に配置して使います。今回の更新はリポジトリ内だけで、配置済みスキルへは未反映です。以後のリポジトリ更新も自動反映されません。Langfuseの既存認証と、メール・カレンダー・Computer History・Notionの接続が必要です。取得できない接続は不足として扱います。
+`skills/daily-diary/` を `~/.codex/skills/daily-diary/` に配置して使います。蓄積資料への接続には `~/.codex/daily-diary.json` のローカル設定を使います。[配置と保存先の接続](docs/collection/setup.md#日記スキルの配置と保存先の接続)を参照してください。コピーで配置した場合、リポジトリ更新は自動反映されません。Langfuseの既存認証と、メール・カレンダー・Computer History・Notionの接続が必要です。取得できない接続は不足として扱います。
 
 ## 活動記録の収集
 
-[収集スキル](skills/collect-activity/SKILL.md)は日記とは独立して使います。Chromeや既存接続の読取はCodexが行い、Pythonの保存処理は渡された収集結果だけを日別JSONへ保存します。CLIを起動するだけではXやYouTubeを収集しません。
+[収集スキル](skills/collect-activity/SKILL.md)は単独での収集にも、日記の資料収集からの取得・保存にも使います。Chromeや既存接続の読取はCodexが行い、Pythonの保存処理は渡された収集結果だけを日別JSONへ保存します。CLIを起動するだけではXやYouTubeを収集しません。
 
 - [導入とScreen Timeの再現](docs/collection/setup.md)
 - [手動収集・バックアップ・復旧](docs/collection/operations.md)
