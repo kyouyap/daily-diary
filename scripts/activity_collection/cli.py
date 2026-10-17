@@ -19,6 +19,10 @@ def main(argv=None):
     imp.add_argument('--input', type=Path, required=True)
     commands.add_parser('status')
     commands.add_parser('recover')
+    commands.add_parser('backup')
+    restore = commands.add_parser('restore')
+    restore.add_argument('--backup', type=Path, required=True)
+    restore.add_argument('--destination', type=Path, required=True)
     day = commands.add_parser('read-day')
     day.add_argument('--date', required=True)
     args = parser.parse_args(argv)
@@ -31,6 +35,12 @@ def main(argv=None):
             result = store.recover(args.root)
         elif args.command == 'read-day':
             result = store.read_day(args.root, args.date)
+        elif args.command == 'backup':
+            from .backup import create_backup
+            result = create_backup(args.root)
+        elif args.command == 'restore':
+            from .backup import restore_backup
+            result = restore_backup(args.backup, args.destination)
         else:
             states = store.status(args.root)['targets']
             result = {'requests': plan_collection(store.configuration(args.root), states, timestamp(args.now) if args.now else datetime.now(JST))}

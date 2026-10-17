@@ -260,8 +260,18 @@ def import_batch(root, batch):
         outputs.append({'path': state_path(source, account), 'value': state, 'sha256': digest(state)})
         atomic_json(root, f'pending/{b["batch_id"]}.json', {'files': outputs, 'sha256': digest(outputs)})
         _recover(root)
+        backup_status = {'status': 'not_requested'}
+        if b['status'] in {'success', 'partial'}:
+            from .backup import _create_backup_locked
+            try:
+                backup_status = _create_backup_locked(root, timestamp(b['observed_at']).astimezone(JST).date().isoformat())
+            except (OSError, ValueError, RecoveryError):
+                # The batch is already durable. Never report it as unsaved or
+                # lose its receipt just because a later backup failed.
+                backup_status = {'status': 'failed'}
+                notifications.append({'source': source, 'account': account, 'status': 'backup_failed'})
         return {'status': 'stored', 'collection_status': b['status'], 'changed_records': changed,
-                'notifications': notifications, 'covered_ranges': state['covered_ranges']}
+                'notifications': notifications, 'covered_ranges': state['covered_ranges'], 'backup': backup_status}
 
 
 def status(root):

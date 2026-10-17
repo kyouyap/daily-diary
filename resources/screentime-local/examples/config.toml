@@ -1,0 +1,7 @@
+timezone = "Asia/Tokyo"
+db_path = "~/Library/Application Support/screentime/screentime.db"
+[sources]
+biome = true
+knowledgec = true
+[lookup]
+enabled = false

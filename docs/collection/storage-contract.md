@@ -42,6 +42,7 @@
 | `schema_version` | 整数。初版は `1` |
 | `batch_id` | UUID文字列。同じ取得結果の再取込では同じ値を使う |
 | `source`, `account` | 許可された資料名、設定済みアカウントの別名 |
+| `observed_identity` | 実際に閲覧・取得した本人の識別子。configのidentityと照合する必須文字列 |
 | `requested_range` | `start`, `end`。タイムゾーン付きISO日時 |
 | `observed_at` | 読取時点のタイムゾーン付きISO日時 |
 | `status` | `success`, `partial`, `failed`, `login_required`, `environment_unavailable` のいずれか |
