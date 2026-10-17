@@ -6,7 +6,17 @@ Asia/Tokyoの対象日0時を開始、翌日0時と実行時点の早い方を�
 
 ## 蓄積したローカル資料
 
-リポジトリで用意した私有runtimeがある場合、`python3 -B -m scripts.activity_collection.cli --root <runtime絶対パス> read-day --date YYYY-MM-DD` から記録と対象別の取得状況を読む。未導入なら自動で実設定・保存先・定期実行を作らず、既存の読取経路と本人の補足を使う。配置済みスキルがリポジトリから独立している場合は、リポジトリの場所を確認してからこのコマンドを使う。
+最初に `~/.codex/daily-diary.json` を読む。`repository` は保存処理のあるリポジトリ、`runtime` は既存記録の保存先を表す絶対パス。このローカル設定には認証情報を入れず、アカウントの対応はruntime/config.jsonに置く。作業ディレクトリやスキルの配置場所から保存先を推測したり、複数の試行用runtimeを混ぜたりしない。
+
+設定先を使い、repositoryを作業ディレクトリとして次を実行する。パス・日付は読み取った値を安全に引数へ渡す。
+
+```text
+python3 -B -m scripts.activity_collection.cli --root <runtime絶対パス> read-day --date YYYY-MM-DD
+```
+
+返る `records` と `targets` を一緒に読む。対象ごとの `covered_ranges`、`last_attempt`（status・range・observed_at・issues）、`last_success`、`blocked_reason` を確認し、日付に合う記録があっても全期間・全アカウントの取得完了とはしない。記録が空でも、確認できた範囲の記録なしと未取得を区別する。今日の記録は実行時点までの途中経過として扱う。
+
+設定がない、保存先が読めない、回復が必要な場合は不足を短く伝える。設定・保存先を自動作成したり、別のruntimeへ切り替えたりせず、以下の既存Langfuse・PC活動の読取経路と本人の補足で進める。既存資料で補った範囲も不足と区別する。X・YouTubeの追加収集を頼まれた場合は `collect-activity` を使ってから再読込する。通常の日記依頼だけで過去30日を収集し直したり、定期実行を登録・再開したりしない。
 
 X・YouTube・Langfuse・PC記録・Screen Timeを読み、同じsourceのローカル資料と追加読取はIDで照合して二重計上しない。保存日と実施日が違う場合があるためevent_time・精度・初回取得日を確認する。未知の日付を当日に補わない。partialや認証待ちは記録ゼロと区別する。
 

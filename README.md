@@ -33,7 +33,7 @@ $daily-diary 今日の業務日誌をまとめて
 - [本文テンプレート](skills/daily-diary/references/diary-format.md)
 - [Notion保存](skills/daily-diary/references/notion-save.md)
 
-このフォルダを `~/.codex/skills/daily-diary/` に配置して使います。今回の更新はリポジトリ内だけで、配置済みスキルへは未反映です。以後のリポジトリ更新も自動反映されません。Langfuseの既存認証と、メール・カレンダー・Computer History・Notionの接続が必要です。取得できない接続は不足として扱います。
+`skills/daily-diary/` を `~/.codex/skills/daily-diary/` に配置して使います。蓄積資料への接続には `~/.codex/daily-diary.json` のローカル設定を使います。[配置と保存先の接続](docs/collection/setup.md#日記スキルの配置と保存先の接続)を参照してください。コピーで配置した場合、リポジトリ更新は自動反映されません。Langfuseの既存認証と、メール・カレンダー・Computer History・Notionの接続が必要です。取得できない接続は不足として扱います。
 
 ## 活動記録の収集
 

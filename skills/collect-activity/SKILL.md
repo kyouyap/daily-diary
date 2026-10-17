@@ -9,6 +9,8 @@ description: 日記とは独立して、本人のX投稿・YouTube再生履歴�
 
 ## 実行前
 
+- 配置済みスキルでは `~/.codex/daily-diary.json` の `repository` と `runtime` を使う。リポジトリを作業ディレクトリとし、スキルがシンボリックリンクなら実体の場所を確認してから相対参照を辿る。`../../docs/` 等はリポジトリ内の文書を指す。設定がなければ保存先を推測・新設せず不足を伝える。
+
 - [運用](../../docs/collection/operations.md)と[保存契約](../../docs/collection/storage-contract.md)を読む。実設定はGit管理外のruntime/config.jsonから読む。キーやCookieは設定しない。
 - 手動実行は一つずつ行う。同じChromeを使う収集が既に動いている場合は始めない。保存処理のロックだけではブラウザ操作全体を排他できない。
 - リポジトリのルートから `python3 -B -m scripts.activity_collection.cli --root <runtime絶対パス> plan` で対象別の要求を得る。これは取得要求の作成だけで、サービスへ接続しない。
