@@ -3,7 +3,7 @@ import copy
 import hashlib
 import json
 import re
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from urllib.parse import urlsplit
 from uuid import UUID
 from zoneinfo import ZoneInfo
@@ -154,7 +154,7 @@ def validate_batch(batch, config):
             if not isinstance(d, dict) or set(d) - FIELDS[source]:
                 raise ValueError('unexpected source data fields')
             day = event_date(r)
-            last_day = (end.astimezone(JST) - __import__('datetime').timedelta(microseconds=1)).date().isoformat()
+            last_day = (end.astimezone(JST) - timedelta(microseconds=1)).date().isoformat()
             if day and not (start.astimezone(JST).date().isoformat() <= day <= last_day):
                 raise ValueError('record outside request dates')
             if r['event_time']['precision'] in {'second', 'minute'}:
@@ -182,6 +182,9 @@ def validate_batch(batch, config):
             elif source == 'langfuse':
                 if d.get('user_id') != target['identity'] or d.get('observation_id') != r['external_id']:
                     raise ValueError('conversation owner or ID mismatch')
+            elif source == 'computer-history':
+                if not d.get('event_id') and not (isinstance(d.get('segment_id'), str) and type(d.get('line')) is int and d['line'] > 0):
+                    raise ValueError('stable event reference required')
             elif source == 'screentime':
                 if not all(isinstance(d.get(k), str) and d[k] for k in ('device', 'application', 'generation', 'sha256')):
                     raise ValueError('missing Screen Time reference')

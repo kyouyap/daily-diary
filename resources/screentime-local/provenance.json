@@ -1,0 +1,9 @@
+{
+  "source_commit": "c25696a3ddac32058ae809f63c04e2bfc0c8dc0f",
+  "wheel_sha256": "2c28016c43183d6d13336e9301681e77d4a386786e3fdcd6f1dd2e83516e047a",
+  "python_binary_sha256": "9756b294b1d22f9e8ffd93fcc680e6f1c7ffaa97e7c6b49988177096adfab09b",
+  "python_origin": "/Users/ogatatakuya/.local/share/uv/python/cpython-3.12.9-macos-aarch64-none",
+  "collector_sha256": "7bf9f3bcd34ea9a8ebc5d1d3d24e06a00c74be978a970561b1baa56bf3983b38",
+  "package_version": "2.0.0",
+  "python_version": "3.12.9"
+}
