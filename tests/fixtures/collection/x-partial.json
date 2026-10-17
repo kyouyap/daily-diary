@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "batch_id": "df97bed9-38e9-4d62-950b-fc9fa38672ec",
+  "source": "x",
+  "account": "account-a",
+  "observed_identity": "fictional-owner",
+  "requested_range": {
+    "start": "2026-10-16T00:00:00+09:00",
+    "end": "2026-10-17T00:00:00+09:00"
+  },
+  "observed_at": "2026-10-17T07:00:00+09:00",
+  "status": "partial",
+  "coverage": [],
+  "records": [
+    {
+      "kind": "post",
+      "external_id": "123",
+      "event_time": {
+        "value": "2026-10-16T12:00:00+09:00",
+        "precision": "second",
+        "timezone": "Asia/Tokyo",
+        "observed_label": null
+      },
+      "content_time": null,
+      "url": null,
+      "data": {
+        "author_id": "fictional-owner",
+        "text": "架空の投稿"
+      }
+    }
+  ],
+  "issues": [
+    {
+      "code": "incomplete_loading",
+      "retryable": true,
+      "range": {
+        "start": "2026-10-16T00:00:00+09:00",
+        "end": "2026-10-17T00:00:00+09:00"
+      }
+    }
+  ]
+}

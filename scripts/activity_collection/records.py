@@ -154,7 +154,8 @@ def validate_batch(batch, config):
             if not isinstance(d, dict) or set(d) - FIELDS[source]:
                 raise ValueError('unexpected source data fields')
             day = event_date(r)
-            if day and not (start.astimezone(JST).date().isoformat() <= day <= end.astimezone(JST).date().isoformat()):
+            last_day = (end.astimezone(JST) - __import__('datetime').timedelta(microseconds=1)).date().isoformat()
+            if day and not (start.astimezone(JST).date().isoformat() <= day <= last_day):
                 raise ValueError('record outside request dates')
             if r['event_time']['precision'] in {'second', 'minute'}:
                 if not start <= timestamp(r['event_time']['value']) < end:
@@ -164,11 +165,18 @@ def validate_batch(batch, config):
                     raise ValueError('missing post text or author')
                 if r['kind'] != 'repost' and d['author_id'] != target['identity']:
                     raise ValueError('post written by another author')
+                if r['kind'] == 'reply' and not isinstance(d.get('reply_to_id'), str):
+                    raise ValueError('reply target required')
+                if r['kind'] == 'quote' and not all(isinstance(d.get(k), str) and d[k] for k in ('original_id', 'original_author_id')):
+                    raise ValueError('quote reference required')
             elif source == 'youtube':
                 if not isinstance(d.get('title'), str):
                     raise ValueError('missing video title')
                 for playback in d.get('observed_playback_times', []):
                     checked_time(playback)
+                    playback_day = event_date({'event_time': playback})
+                    if playback_day and playback_day != day:
+                        raise ValueError('playback belongs to a different day')
                     if playback['precision'] in {'second', 'minute'} and not start <= timestamp(playback['value']) < end:
                         raise ValueError('playback outside request')
             elif source == 'langfuse':
