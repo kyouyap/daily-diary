@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "targets": [
+    {"source": "x", "account": "account-a", "identity": "REPLACE_WITH_OWN_ACCOUNT_ID"},
+    {"source": "youtube", "account": "account-a", "identity": "REPLACE_WITH_OWN_CHANNEL_ID"},
+    {"source": "langfuse", "account": "self", "identity": "REPLACE_WITH_LANGFUSE_USER_ID"},
+    {"source": "computer-history", "account": "self", "identity": "local-owner"},
+    {"source": "screentime", "account": "self", "identity": "local-owner"}
+  ],
+  "backup_generations": 7
+}
