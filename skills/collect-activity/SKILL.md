@@ -1,6 +1,6 @@
 ---
 name: collect-activity
-description: 日記とは独立して、本人のX投稿・YouTube再生履歴・既存のAI会話・PC活動・Screen Timeをローカルの日別JSONへ収集する際に使う。日記本文の作成やNotion保存は行わない。
+description: 日記の資料収集から、または日記とは独立して、本人のX投稿・YouTube再生履歴・既存のAI会話・PC活動・Screen Timeをローカルの日別JSONへ収集する際に使う。日記本文の作成やNotion保存は行わない。
 ---
 
 # 活動記録をローカルへ集める
@@ -16,6 +16,14 @@ description: 日記とは独立して、本人のX投稿・YouTube再生履歴�
 - リポジトリのルートから `python3 -B -m scripts.activity_collection.cli --root <runtime絶対パス> plan` で対象別の要求を得る。これは取得要求の作成だけで、サービスへ接続しない。
 - requested_rangeのstartを含みendを含まない。通常は当日と過去3日、初回は30日前から。過去分は最大7日単位の要求で扱う。実行時間上限を決めていないため無制限の連続回収をしない。
 - configのidentityと実際に閲覧する本人・チャンネルを照合する。別名だけで本人判定しない。照合できなければenvironment_unavailableとして対象を保留する。
+
+## 日記の資料収集から使う場合
+
+日記スキルからrepository・runtime・対象期間を受けた場合、runtime/config.jsonの全対象をその期間に限定して読む。通常planのrecent/backfill要求には広げず、初回でも30日分を始めない。今日は呼出し時に固定した終了時刻まで、過去日は0時から翌0時まで。Screen Timeは既存出力を0時から集計する。
+
+以下の読取・batch作成・importまでを実行してから、保存結果と対象別の取得状況を日記スキルへ返す。planだけ、ブラウザで見ただけ、batchを作っただけで収集・保存完了としない。partialも保存する。本人識別が確認できずimportの条件を満たせない対象は、識別子を捏造せず未保存の保留として返す。
+
+ログイン切れは対象だけ保留して他を続ける。各対象の一回の収集後、未取得区間が残っても日記作成中に無限に回収しない。日記スキル側がread-dayで保存結果を読み直し、本人との対話を続ける。このスキル自身は日記本文・Notionページを作らない。
 
 ## 対象に応じて読む
 
