@@ -2,11 +2,13 @@
 
 現在は手動で呼び出す収集スキルとローカル保存処理。日記スキルからの呼出しでは対象日だけを取得・保存する。配置済みスキルは更新済み。毎朝7時の登録、Mac復帰時のCodex起動は未実施。停止中の日記自動実行を再開しない。
 
+2026-10-19追記: Screen Time・Langfuse・PC活動には[手動の収集スクリプト](script-collectors.md)もある。取得元はcollectors.jsonで指定する。このMacでは既存取得元への接続設定を追加済み。日記スキル・定期実行の自動切替や既存認証の変更は行っていない。新規環境のScreen Timeは[導入手順](screentime-setup.md)を先に実施する。
+
 ## 手動収集
 
 リポジトリのルートで、[導入](setup.md)に従って準備した私有runtimeの絶対パスを指定する。
 
-```sh
+```text
 python3 -B -m scripts.activity_collection.cli --root <runtime> plan
 python3 -B -m scripts.activity_collection.cli --root <runtime> import --input <batch.json>
 python3 -B -m scripts.activity_collection.cli --root <runtime> status
@@ -23,7 +25,7 @@ planは取得要求だけを出す。収集スキルが資料別に読み、sche
 
 backup/restoreのCLIを使う。バックアップはこのMac内のruntime/backupsに作る。外部・クラウドには送らない。元データは無期限、バックアップは最大7世代。
 
-```sh
+```text
 python3 -B -m scripts.activity_collection.cli --root <runtime> backup
 python3 -B -m scripts.activity_collection.cli --root <runtime> restore --backup <世代> --destination <空の復旧先>
 ```
