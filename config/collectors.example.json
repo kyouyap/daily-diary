@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "collectors": {
+    "screentime": {
+      "account": "self",
+      "identity": "local-owner",
+      "export_root": "REPLACE_WITH_EXPORT_DIRECTORY"
+    },
+    "langfuse": {
+      "account": "self",
+      "credentials_file": "~/.codex/langfuse.json",
+      "max_pages": 100,
+      "timeout_seconds": 30
+    },
+    "computer-history": {
+      "account": "self",
+      "identity": "local-owner",
+      "event_stream_root": "REPLACE_WITH_EVENT_STREAM_ROOT",
+      "max_events": 100000,
+      "max_segments": 1000
+    }
+  }
+}

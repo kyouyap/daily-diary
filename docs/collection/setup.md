@@ -2,6 +2,8 @@
 
 この文書は将来の導入用。今回、既存環境の再設定・再インストール・権限変更・定期実行登録は行っていない。
 
+2026-10-19追記: 新規利用者は[Screen Timeの導入・権限・初回確認](screentime-setup.md)と[3資料のスクリプト設定・実行](script-collectors.md)を参照する。以下の既存Macの配置は確認時点の記録であり、新しい利用者に必須の絶対パスではない。
+
 ## 活動記録の保存処理
 
 Python 3.12以上の標準ライブラリを使う。追加の有料APIやAI APIキーは不要。リポジトリのルートから実行する。macOS上でのローカルファイルのロックを使うためWindows向けではない。
@@ -29,7 +31,7 @@ runtimeはGit管理外で、クラウド同期対象でないローカル保存�
 
 - 上流: nichtlegacy/screentime、2.0.0、固定リビジョンは[来歴](../../resources/screentime-local/provenance.json)に記録。
 - 実行用Python: `~/.local/share/screentime-local/app/bin/python`（3.12.9）。DB読取の権限は実行ファイルに依存し、汎用Pythonでの成功を前提にしない。
-- 追加処理: `~/.local/share/screentime-local/collector/local_screentime.py`。同一内容の[保管ソース](../../resources/screentime-local/local_screentime.py)と上流MITライセンスを保存した。今回このソースを実行・変更していない。
+- 追加処理: `~/.local/share/screentime-local/collector/local_screentime.py`。2026-10-17時点では[保管ソース](../../resources/screentime-local/local_screentime.py)と同一。2026-10-19に保管ソースへ明示的な設定パス指定などを追加したが、配置済みコードは未更新。上流MITライセンスも保存。
 - 設定: `~/.config/screentime/config.toml`。timezone=Asia/Tokyo、db_pathは `~/Library/Application Support/screentime/screentime.db`、sources.biome=true、sources.knowledgec=true、lookup.enabled=false。
 - Agent: `~/Library/LaunchAgents/io.github.nichtlegacy.screentime.plist`。StartInterval=900、RunAtLoad=true、TZ=Asia/Tokyo、専用Pythonの `-I -B` から追加処理のcollectを呼ぶ。ログは `~/Library/Logs/screentime`、umask=077。
 - local_sessionsはビュー。遅延同期されたfocus遷移をlocal_focus_transitionsへ保持して再構築し、local_event_lifecycleで訂正を整理する。

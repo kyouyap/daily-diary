@@ -39,6 +39,8 @@ $daily-diary 今日の業務日誌をまとめて
 
 [収集スキル](skills/collect-activity/SKILL.md)は単独での収集にも、日記の資料収集からの取得・保存にも使います。Chromeや既存接続の読取はCodexが行い、Pythonの保存処理は渡された収集結果だけを日別JSONへ保存します。CLIを起動するだけではXやYouTubeを収集しません。
 
+Screen Time・Langfuse・PC活動には、AIを介さず取得・保存する[手動実行スクリプト](docs/collection/script-collectors.md)もあります。設定例・`--check`・[新しいMac向けのScreen Time導入手順](docs/collection/screentime-setup.md)を用意しています。取得元や保存先は利用者が設定します。既存の日記スキルや定期実行への切替は行っていません。
+
 - [導入とScreen Timeの再現](docs/collection/setup.md)
 - [手動収集・バックアップ・復旧](docs/collection/operations.md)
 - [保存仕様](docs/collection/storage-contract.md)

@@ -19,7 +19,7 @@ from screentime.sources.biome import (
 )
 from screentime.sources.knowledgec import KnowledgeCSource
 from screentime.sources import UsageEvent
-from screentime import taxonomy, launchd
+from screentime import taxonomy
 from screentime.aggregates import rebuild_days
 from screentime.config import load_settings
 from screentime.db import connect, init_db, get_state, set_state, now_utc_iso, parse_timestamp
@@ -443,16 +443,20 @@ def main(argv=None):
     os.umask(0o077)
     parser=argparse.ArgumentParser(description="Local-only Screen Time collection; aggregate output only")
     parser.add_argument("command",choices=["collect","health"])
+    parser.add_argument("--config", type=Path,
+                        default=Path.home()/".config/screentime/config.toml",
+                        help="Settings file; default is the existing per-user convention")
     args=parser.parse_args(argv)
     # Whitelist the config source; inherited sink or source-path overrides must
     # never alter the local-only collector's behavior.
     for key in list(os.environ):
         if key.startswith(("HA_","INFLUX_","SCREENTIME_")): del os.environ[key]
-    os.environ["SCREENTIME_CONFIG"]=str(Path.home()/".config/screentime/config.toml")
+    os.environ["SCREENTIME_CONFIG"]=str(args.config.expanduser().absolute())
     try:
+        if not args.config.expanduser().is_file():
+            raise ValueError("configuration file required")
         settings=load_settings(); validate_settings(settings)
         if args.command=="collect":
-            launchd.rotate_logs()
             result=collect(settings)
         else:
             result=database_health(settings)
