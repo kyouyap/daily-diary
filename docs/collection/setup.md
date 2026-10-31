@@ -27,6 +27,24 @@ runtimeはGit管理外で、クラウド同期対象でないローカル保存�
 
 この接続設定を置くだけでは収集は始まらない。「日記を書いて」では保存済み記録と取得状況を先に確認し、収集スキルを対象日だけの取得・保存として使ってから読み直す。「保存済み資料だけで」の指定があれば追加取得を省く。定期実行は登録・再開しない。導入後はリポジトリ外を作業ディレクトリにして、配置済みスキルの説明だけで対象日のread-dayへ辿り、部分取得も認識できるか確認する。Notionへは本文の承認後に保存する。
 
+## 位置情報CSVの接続
+
+既存のiCloud位置情報CSVを日記の参考資料にする場合、同じ `~/.codex/daily-diary.json` に任意の `location_csv` を追加する。実在するCSVの絶対パスを指定し、既存の `repository`・`runtime` と他の設定値は保持する。位置情報を使わない場合はキーを省略できる。
+
+```json
+{
+  "repository": "/absolute/path/to/daily-diary",
+  "runtime": "/absolute/path/to/private-runtime",
+  "location_csv": "/absolute/path/to/iCloud Drive/location.csv"
+}
+```
+
+設定変更は導入時の操作。通常の日記作成では未設定ならそのまま続け、CSVや空の保存先を自動作成しない。iCloud側の書き出しと同期は別途必要で、この設定は記録・同期を開始しない。後日の日記で使えるのは、その時点のCSVに残る記録に限られる。
+
+日記スキルを更新するときは `scripts/` も含めてコピーする。[位置情報の参照](../../skills/daily-diary/references/location.md)の読み取り例はPython 3.12以上の標準ライブラリだけで動き、作業用worktreeへのリンクや収集用runtimeへの保存は不要。コピー後に参照文書と同梱スクリプトの一致を照合する。資料の状態と行番号付きの対象記録を読み、施設名・代表座標だけで行動や感情を確定しない。
+
+カレンダーは日記作成時に接続済みAPIで本人の `primary` を読む。共有・祝日等は本人が対象に指定した場合に限って使う。今回の導入では権限や予定の編集、定期複製を設定しない。
+
 ## Screen Timeで確認した構成
 
 - 上流: nichtlegacy/screentime、2.0.0、固定リビジョンは[来歴](../../resources/screentime-local/provenance.json)に記録。
