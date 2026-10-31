@@ -100,6 +100,18 @@ class LocationReferenceTests(unittest.TestCase):
         self.csv.write_text('wrong,headers\nfictional,content\n')
         self.assertEqual(self.read()['status'], 'unavailable')
 
+    def test_blank_and_multiline_rows_keep_physical_source_start_lines(self):
+        self.csv.write_text(
+            'record_type,start_time,end_time,title\n'
+            '\n'
+            'place,2099-01-02T01:00:00+09:00,2099-01-02T02:00:00+09:00,"架空\n施設"\n'
+            '\n'
+            'place,invalid,,施設\n', encoding='utf-8')
+        result = self.read()
+        self.assertEqual(result['records'][0]['line'], 3)
+        self.assertEqual(result['records'][0]['label'], '架空\n施設')
+        self.assertEqual(result['issues'][0]['line'], 6)
+
     def cli(self, config, start=START, end=END):
         return subprocess.run([sys.executable, '-B', str(SCRIPT), '--config', str(config),
                                '--start', start, '--end', end],
@@ -129,6 +141,15 @@ class LocationReferenceTests(unittest.TestCase):
         self.assertEqual(json.loads(result.stdout)['status'], 'invalid_request')
         result = self.cli(config, start=END, end=START)
         self.assertEqual(result.returncode, 2)
+
+    def test_invalid_path_returns_unavailable_json_instead_of_traceback(self):
+        config = self.root / 'local.json'
+        config.write_text(json.dumps({'location_csv': '/nonexistent\u0000.csv'}))
+        result = self.cli(config)
+        self.assertEqual(result.returncode, 1)
+        self.assertTrue(result.stdout, result.stderr)
+        self.assertEqual(json.loads(result.stdout)['status'], 'unavailable')
+        self.assertEqual(result.stderr, '')
 
 
 if __name__ == '__main__':

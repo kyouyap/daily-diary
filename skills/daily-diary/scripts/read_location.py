@@ -35,13 +35,17 @@ def read_location(path: Path, start: datetime, end: datetime) -> dict:
                         'end': end.astimezone(JST).isoformat()}}
     try:
         with path.open(encoding='utf-8-sig', newline='') as f:
-            reader = csv.DictReader(f, strict=True)
+            reader = csv.reader(f, strict=True)
+            headers = next(reader, [])
             required = {'record_type', 'start_time', 'end_time', 'title'}
-            if not required.issubset(reader.fieldnames or []):
+            if not required.issubset(headers):
                 return unavailable('invalid_csv_headers')
             previous_line = reader.line_num
-            for row in reader:
+            for values in reader:
                 line, previous_line = previous_line + 1, reader.line_num
+                if not values:
+                    continue
+                row = dict(zip(headers, values))
                 try:
                     if row.get('record_type') not in {'place', 'move'}:
                         raise ValueError('invalid kind')
@@ -76,7 +80,7 @@ def read_location(path: Path, start: datetime, end: datetime) -> dict:
                     'latitude': coordinates[0], 'longitude': coordinates[1],
                     'transport_mode': row.get('transport_mode') or '',
                 })
-    except (OSError, UnicodeError, csv.Error):
+    except (OSError, UnicodeError, csv.Error, ValueError):
         if not result['records']:
             return unavailable('csv_unreadable')
         result['issues'].append({'code': 'csv_read_interrupted'})
