@@ -1,0 +1,4 @@
+interface:
+  display_name: "会社の業務日誌"
+  short_description: "Codex・Notion・Slackの証跡から会社の一日を振り返り、確認した本文をNotionへ残す"
+  default_prompt: "$work-diary 今日の会社の仕事を、記録をもとに一緒に振り返りたい"

@@ -2,6 +2,20 @@
 
 記録をきっかけに「どんな一日だったか」を一緒に振り返り、本人の感想と、その日に行ったことをNotionへ残すCodexスキルです。話し言葉の温度感を残して読みやすく整えます。
 
+## 会社の仕事を振り返る
+
+会社用には、別スキルの [work-diary](skills/work-diary/SKILL.md) を使います。Codexの会話記録を中心に、接続できるNotion・Slack・Computer Historyをその場で読み、仕事の証跡と本人の振り返りを残します。
+
+```text
+$work-diary 今日の会社の仕事を振り返りたい
+```
+
+必要なのはCodex、Python 3.12以上と、利用するサービスの会社用接続です。会社PCの `~/.codex/skills/work-diary/`（CODEX_HOMEを変更している場合はそのskills配下）へ `skills/work-diary/` をフォルダごとコピーします。このフォルダだけで動きます。
+
+初回に、会社用として参照する作業フォルダの絶対パスと、会社側のNotion保存先URLを指定します。設定は `$CODEX_HOME/work-diary.json`（既定は `~/.codex/work-diary.json`）へ置きます。[設定と資料の読み取り](skills/work-diary/references/sources.md)を参照してください。保存先が未定なら下書きまで使えます。
+
+普段は主な仕事の記録を見て会話で振り返り、全文確認後にNotionへ保存します。保存後のリンクと読み戻し結果で完了を確認します。初版のLLM会話資料はCodexのローカル記録です。Claude・ChatGPTの会話履歴は後続対応です。会社環境の接続と実際のNotion保存は、その環境で確認する必要があります。
+
 ## 使い方
 
 ```text
