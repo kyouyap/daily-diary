@@ -2,6 +2,7 @@
 """Read scoped, timestamped Codex evidence without changing source files."""
 import argparse
 from datetime import datetime
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -33,6 +34,31 @@ def plain_text(value):
     return ''
 
 
+def injected_context(text):
+    stripped = text.strip()
+    return (stripped.startswith('# AGENTS.md instructions for ')
+            or (stripped.startswith('<environment_context>')
+                and stripped.endswith('</environment_context>')))
+
+
+def message_text(content, filter_context):
+    if not isinstance(content, list):
+        return '', True
+    parts, malformed = [], False
+    for block in content:
+        if not isinstance(block, dict):
+            malformed = True
+        elif block.get('type') in ('input_text', 'output_text', 'text'):
+            text = block.get('text')
+            if not isinstance(text, str):
+                malformed = True
+            elif not (filter_context and injected_context(text)):
+                parts.append(text)
+        elif block.get('type') not in ('input_image', 'output_image', 'image', 'image_url', 'input_file'):
+            malformed = True
+    return '\n'.join(parts), malformed
+
+
 def read_day(home, roots, start, end, offset=0, limit=200, max_chars=2000):
     records, issues = [], []
     roots = [normalized_path(root) for root in roots]
@@ -46,7 +72,7 @@ def read_day(home, roots, start, end, offset=0, limit=200, max_chars=2000):
     for path in files:
         cwd, session_id, subagent = None, None, False
         current, legacy, calls = [], [], {}
-        has_response_messages = False
+        message_keys = set()
         try:
             with path.open(encoding='utf-8') as stream:
                 for number, line in enumerate(stream, 1):
@@ -76,13 +102,13 @@ def read_day(home, roots, start, end, offset=0, limit=200, max_chars=2000):
                         cwd = payload.get('cwd', cwd)
                         continue
                     text, record_kind, tool, call_id = '', None, None, payload.get('call_id')
+                    malformed = False
                     if entry_type == 'response_item':
                         if kind == 'message' and payload.get('role') in ('user', 'assistant'):
                             if payload.get('channel') == 'analysis' or payload.get('phase') == 'analysis':
                                 continue
-                            has_response_messages = True
                             record_kind = payload['role']
-                            text = plain_text(payload.get('content'))
+                            text, malformed = message_text(payload.get('content'), record_kind == 'user')
                         elif kind in ('function_call', 'custom_tool_call'):
                             tool = payload.get('name')
                             if call_id:
@@ -96,7 +122,9 @@ def read_day(home, roots, start, end, offset=0, limit=200, max_chars=2000):
                     elif entry_type == 'event_msg' and kind in ('user_message', 'agent_message'):
                         record_kind = 'user' if kind == 'user_message' else 'assistant'
                         text = plain_text(payload.get('message'))
-                    if record_kind is None or not text:
+                        if record_kind == 'user' and injected_context(text):
+                            continue
+                    if record_kind is None or (not text and not malformed):
                         continue
                     if not isinstance(cwd, str) or not Path(cwd).is_absolute():
                         issues.append({'code': 'workspace_unknown', **source})
@@ -111,19 +139,28 @@ def read_day(home, roots, start, end, offset=0, limit=200, max_chars=2000):
                         continue
                     if not start <= timestamp < end:
                         continue
+                    if malformed:
+                        issues.append({'code': 'invalid_message_content', **source})
+                    if not text:
+                        continue
                     record = dict(timestamp=timestamp.astimezone(start.tzinfo).isoformat(),
                                   kind=record_kind, text=text[:max_chars],
                                   truncated=len(text) > max_chars, session_id=session_id,
                                   cwd=cwd, source=source)
                     if call_id:
                         record.update(call_id=call_id, tool=tool)
-                    (legacy if entry_type == 'event_msg' else current).append(record)
+                    key = (timestamp, record_kind, hashlib.sha256(text.encode('utf-8')).digest())
+                    if entry_type == 'event_msg':
+                        legacy.append((key, record))
+                    else:
+                        current.append(record)
+                        if record_kind in ('user', 'assistant'):
+                            message_keys.add(key)
         except (OSError, UnicodeError) as error:
             issues.append({'code': 'unreadable_file', 'path': str(path), 'reason': type(error).__name__})
         if not subagent:
             records.extend(current)
-            if not has_response_messages:
-                records.extend(legacy)
+            records.extend(record for key, record in legacy if key not in message_keys)
     records.sort(key=lambda r: (aware_time(r['timestamp']), r['source']['path'], r['source']['line']))
     page = records[offset:offset + limit]
     next_offset = offset + limit if offset + limit < len(records) else None

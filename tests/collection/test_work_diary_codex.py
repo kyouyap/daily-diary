@@ -107,6 +107,44 @@ class WorkDiaryCodexTests(unittest.TestCase):
                      source={'subagent':{'spawn':{'parent_thread_id':'parent'}}})
         self.assertEqual([r['text'] for r in self.invoke()['records']], ['review','reviewed'])
 
+    def test_legacy_day_records_survive_responses_on_other_days_or_broken_bodies(self):
+        self.session('sessions/switched-format.jsonl', [
+            message('2026-11-01T01:00:00Z', 'old response'),
+            event('2026-11-03T01:00:00Z','event_msg',dict(type='user_message',message='today')),
+        ])
+        self.session('sessions/broken-echo.jsonl', [
+            event('2026-11-03T02:00:00Z','response_item',dict(type='message',role='user',content=[{'type':'input_text'}])),
+            event('2026-11-03T02:00:00Z','event_msg',dict(type='user_message',message='intact fallback')),
+        ])
+        result=self.invoke()
+        self.assertEqual([r['text'] for r in result['records']], ['today','intact fallback'])
+
+    def test_auto_context_is_not_a_user_action_and_mixed_real_text_is_kept(self):
+        context='<environment_context>\n<cwd>/tmp/work</cwd>\n</environment_context>'
+        mixed=message('2026-11-03T03:00:00Z', context)
+        mixed['payload']['content'].append({'type':'input_text','text':'再現条件を調べて'})
+        self.session('sessions/context.jsonl', [
+            message('2026-11-03T01:00:00Z', context),
+            message('2026-11-03T02:00:00Z', '# AGENTS.md instructions for /tmp/work\n<INSTRUCTIONS>rules</INSTRUCTIONS>'),
+            mixed,
+        ])
+        self.assertEqual([r['text'] for r in self.invoke()['records']], ['再現条件を調べて'])
+
+    def test_broken_or_unknown_text_is_partial_while_images_are_intentionally_omitted(self):
+        rows=[]
+        for content in [[{'type':'input_text'}], [{'type':'future_text','value':'unknown'}],
+                        [{'type':'input_image','image_url':'data:image/png;base64,fictional'}]]:
+            row=message('2026-11-03T01:00:00Z','unused')
+            row['payload']['content']=content
+            rows.append(row)
+        self.session('sessions/malformed-text.jsonl',rows)
+        result=self.invoke()
+        self.assertEqual(result['status'],'partial')
+        self.assertEqual(result['records'],[])
+        self.assertEqual([i['code'] for i in result['issues']],
+                         ['invalid_message_content','invalid_message_content'])
+        self.assertEqual([i['line'] for i in result['issues']],[2,3])
+
     def test_corruption_and_unzoned_time_keep_good_records_and_report_partial(self):
         self.session('sessions/broken.jsonl', [
             '{broken',

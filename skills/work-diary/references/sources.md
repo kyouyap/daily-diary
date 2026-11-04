@@ -33,7 +33,7 @@ python3 -B <スキルの絶対パス>/scripts/read_codex_day.py \
 
 実行時は固定した対象期間と設定のフォルダを渡す。複数のフォルダは `--workspace-root` を繰り返す。必要なら `--codex-home` を明示する。日付のディレクトリは会話開始日なので、対象日のフォルダだけを検索しない。このスクリプトは全保存先からイベントの時刻と作業フォルダで絞る。
 
-- `kind=user` は本人の発言、`assistant` はAIの報告、`tool_call` は呼び出し、`tool_result` は返された結果。結果本文を読んで実施状態を判断する。
+- `kind=user` はuserロールの文章、`assistant` はAIの報告、`tool_call` は呼び出し、`tool_result` は返された結果。既知のAGENTS.md・環境情報の自動投入は除外するが、userロールにも資料の引用や設定があり得る。本文を読んで本人の依頼・判断を確認し、結果本文から実施状態を判断する。
 - `source.path` と `source.line`、`session_id` が根拠。リンクを取得できなければ、CODEX_HOME相対のファイル名・行番号とsession IDを出典として残す。
 - `next_offset` があれば同じ期間・範囲で `--offset` を渡して続きを読む。`truncated=true` の必要な記録は、元ファイルの該当行を追加で読むか、`--max-chars` を増やして読み直す。単一行のツール結果は大きい場合があるため、必要な部分から読む。
 - `status=partial`、`issues`、本文省略はその制約として扱う。`read` はローカルの対象記録を読めたという意味であり、全業務や全PCの履歴が揃った意味ではない。
